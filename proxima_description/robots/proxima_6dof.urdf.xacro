@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="proxima_6dof">
+
+<xacro:property name="scale" value="0.001 0.001 0.001"/>
+
+<xacro:property name="mesh_path" value="package://proxima_description/meshes/manipulators/6DOF"/>
+
+<xacro:macro name="default_inertial" params="mass ixx ixy ixz iyy iyz izz">
+<inertial>
+<mass value="${mass}"/>
+<inertia ixx="${ixx}" ixy="${ixy}" ixz="${ixz}" iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
+</inertial>
+</xacro:macro>
+
+<link name="world"/>
+
+<link name="link_base">
+<visual>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/base_assy.STL" scale="${scale}"/>
+</geometry>
+<material name="dark_grey">
+<color rgba="0.25 0.25 0.25 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/base_assy.STL" scale="${scale}"/>
+</geometry>
+</collision>
+<xacro:default_inertial mass="3.0" ixx="0.012" ixy="0.0" ixz="0.0" iyy="0.012" iyz="0.0" izz="0.010"/>
+</link>
+<!--
+ ── 2. Global roll assembly ───────────────────────────────
+       BBox: X[-163,163]  Y[-96,96]  Z[-111,0]  (mm)
+       Mesh hangs below Z=0 → joint places it at top of base (Z=125 mm).
+  
+-->
+<link name="link_global_roll">
+<visual>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/global_roll_assembly.STL" scale="${scale}"/>
+</geometry>
+<material name="light_grey">
+<color rgba="0.75 0.75 0.75 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/global_roll_assembly.STL" scale="${scale}"/>
+</geometry>
+</collision>
+<xacro:default_inertial mass="2.5" ixx="0.020" ixy="0.0" ixz="0.0" iyy="0.020" iyz="0.0" izz="0.008"/>
+</link>
+<!--
+ ── 3. GP1 – Upper arm (shoulder / link 1) ────────────────
+       BBox: X[-124,46]  Y[-50,51]  Z[-49,526]  (mm)
+       Long link ~575 mm.  Joint at bottom (Z≈-49).
+  
+-->
+<link name="link_gp1">
+<visual>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/GP1.STL" scale="${scale}"/>
+</geometry>
+<material name="orange">
+<color rgba="0.9 0.45 0.05 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/GP1.STL" scale="${scale}"/>
+</geometry>
+</collision>
+<xacro:default_inertial mass="2.0" ixx="0.080" ixy="0.0" ixz="0.0" iyy="0.080" iyz="0.0" izz="0.005"/>
+</link>
+<!--
+ ── 4. GP2 – Forearm (elbow / link 2) ────────────────────
+       BBox: X[-1,81]  Y[-33,35]  Z[-60,302]  (mm)
+       ~362 mm long.  Joint at bottom (Z≈-60).
+  
+-->
+<link name="link_gp2">
+<visual>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/GP2.STL" scale="${scale}"/>
+</geometry>
+<material name="orange"/>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/GP2.STL" scale="${scale}"/>
+</geometry>
+</collision>
+<xacro:default_inertial mass="1.5" ixx="0.030" ixy="0.0" ixz="0.0" iyy="0.030" iyz="0.0" izz="0.003"/>
+</link>
+<!--
+ ── 5. Wrist differential base ───────────────────────────
+       BBox: X[-23,23]  Y[-71,71]  Z[0,97]  (mm)
+       Sits at wrist, Z grows upward from mating face.
+  
+-->
+<link name="link_wrist_base">
+<visual>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/wrist_diff_base.STL" scale="${scale}"/>
+</geometry>
+<material name="dark_grey"/>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/wrist_diff_base.STL" scale="${scale}"/>
+</geometry>
+</collision>
+<xacro:default_inertial mass="0.8" ixx="0.004" ixy="0.0" ixz="0.0" iyy="0.002" iyz="0.0" izz="0.004"/>
+</link>
+<!--
+ ── 6. Wrist differential output ─────────────────────────
+       BBox: X[-22,22]  Y[-55,55]  Z[-14,53]  (mm)
+       Connects above wrist_diff_base.
+  
+-->
+<link name="link_wrist_output">
+<visual>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/wrist_diff_output.STL" scale="${scale}"/>
+</geometry>
+<material name="light_grey"/>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/wrist_diff_output.STL" scale="${scale}"/>
+</geometry>
+</collision>
+<xacro:default_inertial mass="0.5" ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+</link>
+<!--
+ ── 7. Gripper ────────────────────────────────────────────
+       BBox: X[-60,60]  Y[-27,27]  Z[0,123]  (mm)
+       Symmetric about Z, mounts at Z=0 of wrist output.
+  
+-->
+<link name="link_gripper">
+<visual>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/gripper.STL" scale="${scale}"/>
+</geometry>
+<material name="silver">
+<color rgba="0.85 0.85 0.85 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+<geometry>
+<mesh filename="${mesh_path}/gripper.STL" scale="${scale}"/>
+</geometry>
+</collision>
+<xacro:default_inertial mass="0.4" ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+</link>
+<!--
+ TCP frame – massless end-effector reference point 
+-->
+<link name="link_tcp"/>
+<!--
+ ============================================================
+       JOINTS
+  ============================================================ 
+-->
+<!-- J0 – world → base (fixed) -->
+<joint name="joint_world_base" type="fixed">
+<parent link="world"/>
+<child link="link_base"/>
+<origin xyz="0 0 0" rpy="0 0 0"/>
+</joint>
+<!--
+ J1 – base rotation (yaw / DoF 1)
+       Parent top face at Z = 0.125 m (125 mm × 0.001).
+       global_roll mesh hangs downward from Z=0, so child origin = 0.
+  
+-->
+<joint name="joint1_base_roll" type="revolute">
+<parent link="link_base"/>
+<child link="link_global_roll"/>
+<origin xyz="0.0125 0 0.125" rpy="0 0 0"/>
+<!--
+ X offset = mesh centre X (12.5 mm) to align rotation axis 
+-->
+<axis xyz="0 0 1"/>
+<limit lower="${-pi}" upper="${pi}" effort="150.0" velocity="1.5"/>
+<dynamics damping="0.5" friction="0.3"/>
+</joint>
+<!--
+ J2 – shoulder pitch (DoF 2)
+       global_roll bottom of mesh is at Z=-0.111 m.
+       GP1 mesh has its pivot near Z_min ≈ -0.049 m.
+       Place shoulder joint at Z=-0.111 relative to global_roll link.
+  
+-->
+<joint name="joint2_shoulder_pitch" type="revolute">
+<parent link="link_global_roll"/>
+<child link="link_gp1"/>
+<origin xyz="0 0 -0.111" rpy="0 0 0"/>
+<axis xyz="0 1 0"/>
+<limit lower="${-pi/2}" upper="${pi}" effort="200.0" velocity="1.2"/>
+<dynamics damping="0.8" friction="0.4"/>
+</joint>
+<!--
+ J3 – elbow pitch (DoF 3)
+       GP1 top of usable geometry ≈ Z_max = 0.526 m.
+       GP2 mesh pivot near Z_min ≈ -0.060 m.
+  
+-->
+<joint name="joint3_elbow_pitch" type="revolute">
+<parent link="link_gp1"/>
+<child link="link_gp2"/>
+<origin xyz="0 0 0.526" rpy="0 0 0"/>
+<axis xyz="0 1 0"/>
+<limit lower="${-pi}" upper="${pi/2}" effort="150.0" velocity="1.5"/>
+<dynamics damping="0.5" friction="0.3"/>
+</joint>
+<!--
+ J4 – wrist roll / DoF 4  (forearm roll about its own axis)
+       GP2 tip at Z_max = 0.302 m.
+       wrist_diff_base sits at Z=0 on its bottom face.
+  
+-->
+<joint name="joint4_wrist_roll" type="revolute">
+<parent link="link_gp2"/>
+<child link="link_wrist_base"/>
+<origin xyz="0.040 0 0.302" rpy="0 0 0"/>
+<!-- X offset accounts for GP2 mesh centre X ≈ 40 mm -->
+<axis xyz="0 0 1"/>
+<limit lower="${-pi}" upper="${pi}" effort="80.0" velocity="2.0"/>
+<dynamics damping="0.3" friction="0.2"/>
+</joint>
+<!--
+ J5 – wrist pitch (DoF 5) – differential output pitch
+       wrist_diff_base top at Z=0.097 m.
+       wrist_diff_output straddles Z=0 (Z_min=-0.014).
+  
+-->
+<joint name="joint5_wrist_pitch" type="revolute">
+<parent link="link_wrist_base"/>
+<child link="link_wrist_output"/>
+<origin xyz="0 0 0.097" rpy="0 0 0"/>
+<axis xyz="0 1 0"/>
+<limit lower="${-pi/2}" upper="${pi/2}" effort="60.0" velocity="2.5"/>
+<dynamics damping="0.2" friction="0.1"/>
+</joint>
+<!--
+ J6 – tool / gripper roll (DoF 6)
+       wrist_diff_output top at Z=0.053 m.
+       Gripper mounts at Z=0 of its mesh.
+  
+-->
+<joint name="joint6_gripper_roll" type="revolute">
+<parent link="link_wrist_output"/>
+<child link="link_gripper"/>
+<origin xyz="0 0 0.053" rpy="0 0 0"/>
+<axis xyz="0 0 1"/>
+<limit lower="${-pi}" upper="${pi}" effort="40.0" velocity="3.0"/>
+<dynamics damping="0.1" friction="0.1"/>
+</joint>
+<!--
+ J_tcp – gripper tip (fixed reference frame)
+       Gripper Z_max = 0.123 m.
+  
+-->
+<joint name="joint_tcp" type="fixed">
+<parent link="link_gripper"/>
+<child link="link_tcp"/>
+<origin xyz="0 0 0.123" rpy="0 0 0"/>
+</joint>
+</robot>
