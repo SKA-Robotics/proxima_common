@@ -17,14 +17,14 @@ def generate_launch_description():
     manipulator_version_arg = DeclareLaunchArgument(
         'manipulator',
         default_value='none',
-        description='Manipulator version',
-        choices=['none', '6DOF']
+        description='Manipulator version'
     )
 
     robot_description = ParameterValue(
-        Command(['xacro ', xacro_path,
-                 ' manipulator:=', LaunchConfiguration('manipulator')
-                 ]),
+        Command([
+            'xacro ', xacro_path,
+            ' manipulator:=', LaunchConfiguration('manipulator')
+        ]),
         value_type=str
     )
 
@@ -32,6 +32,7 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         name='robot_state_publisher',
+        output='screen',
         parameters=[{'robot_description': robot_description}]
     )
 

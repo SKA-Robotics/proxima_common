@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="proxima_preview">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="proxima_base">
   
   <!-- ========================================== -->
   <!-- PROPERTIES                                 -->
   <!-- ========================================== -->
   <xacro:property name="scale" value="0.001 0.001 0.001"/>
+
+  <!-- Mesh filenames -->
+  <xacro:property name="mesh_profile_30x30" value="package://proxima_description/meshes/proxima/profile_30x30.stl"/>
+  <xacro:property name="mesh_clamp_6" value="package://proxima_description/meshes/proxima/clamp_6.stl"/>
+  <xacro:property name="mesh_swerve_mount" value="package://proxima_description/meshes/proxima/swerve_mount.stl"/>
+  <xacro:property name="mesh_fork_2" value="package://proxima_description/meshes/proxima/fork_2.stl"/>
+  <xacro:property name="mesh_wheel" value="package://proxima_description/meshes/proxima/wheel.stl"/>
+  <xacro:property name="mesh_frame_assemble" value="package://proxima_description/meshes/proxima/Frame_assemble.stl"/>
+  <xacro:property name="mesh_hub" value="package://proxima_description/meshes/proxima/hub.stl"/>
   
   <xacro:property name="frame_mesh_xyz" value="-0.12 0 -0.105"/>
   <xacro:property name="frame_mesh_rpy" value="${pi/2} 0 0" />
@@ -13,14 +22,14 @@
   <xacro:property name="hub_mesh_rpy_right" value="${pi/2} 0 ${-pi/2}"/>
   
   <xacro:property name="current_rod_tilt" value="${pi/12}"/>
-  <xacro:property name="fru_yaw" value="-${pi/9}"/>
-  <xacro:property name="rod_fru_joint_xyz" value="-0.04 -0.07 0.025"/>
-  <xacro:property name="rod_frl_joint_xyz" value="-0.04 -0.07 -0.025"/>
+  <xacro:property name="front_right_upper_yaw" value="-${pi/9}"/>
+  <xacro:property name="rod_front_right_upper_joint_xyz" value="-0.04 -0.07 0.025"/>
+  <xacro:property name="rod_front_right_lower_joint_xyz" value="-0.04 -0.07 -0.025"/>
 
-  <xacro:property name="rod_fru_joint_rpy" value="${current_rod_tilt} 1.21 0"/>
+  <xacro:property name="rod_front_right_upper_joint_rpy" value="${current_rod_tilt} 1.21 0"/>
   
-  <xacro:property name="rod_hub_joint_lower" value="-0.5236"/>
-  <xacro:property name="rod_hub_joint_upper" value="0.5236"/>
+  <xacro:property name="rod_rotation_lower" value="-1.1"/>
+  <xacro:property name="rod_rotation_upper" value="0.673"/>
   <xacro:property name="rod_hub_joint_effort" value="50.0"/>
   <xacro:property name="rod_hub_joint_velocity" value="3.0"/>
 
@@ -33,36 +42,39 @@
   <!-- ========================================== -->
 
   <!-- ROD ASSEMBLY -->
-  <xacro:macro name="rod_assembly" params="prefix parent_link joint_xyz joint_rpy joint_axis mesh_xyz mesh_rpy">
+  <xacro:macro name="rod_assembly" params="prefix parent_link joint_xyz joint_rpy joint_axis mesh_xyz mesh_rpy mimic_joint:='' mimic_multiplier:='1.0' mimic_offset:='0.0'">
     <link name="rod_${prefix}_link">
       <visual>
         <!-- Rotation applied ONLY to the mesh here -->
         <origin xyz="${mesh_xyz}" rpy="${mesh_rpy}"/>
-        <geometry><mesh filename="package://proxima_description/meshes/proxima/profile_30x30.stl" scale="${scale}"/></geometry>
+        <geometry><mesh filename="${mesh_profile_30x30}" scale="${scale}"/></geometry>
         <material name="gray_frame"/>
       </visual>
       <collision>
         <origin xyz="0 -0.18 -0.04" rpy="${mesh_rpy}"/>
         <geometry>
-          <box size="0.03 0.03 0.35}"/>
+          <box size="0.03 0.03 0.35"/>
         </geometry>
       </collision>
     </link>
-    <joint name="${parent_link}_to_rod_${prefix}_joint" type="revolute">
+    <joint name="rod_${prefix}_joint" type="revolute">
       <parent link="${parent_link}"/>
       <child link="rod_${prefix}_link"/>
       <origin xyz="${joint_xyz}" rpy="${joint_rpy}"/>
       <axis xyz="${joint_axis}"/> 
-      <limit lower="${rod_hub_joint_lower}" upper="${rod_hub_joint_upper}" effort="${rod_hub_joint_effort}" velocity="${rod_hub_joint_velocity}"/>
+      <limit lower="${rod_rotation_lower}" upper="${rod_rotation_upper}" effort="${rod_hub_joint_effort}" velocity="${rod_hub_joint_velocity}"/>
+      <xacro:if value="${mimic_joint != ''}">
+        <mimic joint="${mimic_joint}" multiplier="${mimic_multiplier}" offset="${mimic_offset}"/>
+      </xacro:if>
     </joint>
   </xacro:macro>
 
   <!-- CLAMP ASSEMBLY -->
-  <xacro:macro name="clamp_assembly" params="prefix parent_link joint_xyz joint_rpy mesh_xyz mesh_rpy">
+  <xacro:macro name="clamp_assembly" params="prefix parent_link joint_xyz joint_rpy mesh_xyz mesh_rpy mimic_joint:='' mimic_multiplier:='1.0' mimic_offset:='0.0'">
     <link name="clamp_${prefix}_link">
       <visual>
         <origin xyz="${mesh_xyz}" rpy="${mesh_rpy}"/>
-        <geometry><mesh filename="package://proxima_description/meshes/proxima/clamp_6.stl" scale="${scale}"/></geometry>
+        <geometry><mesh filename="${mesh_clamp_6}" scale="${scale}"/></geometry>
         <material name="gray_frame"/>
       </visual>
       <collision>
@@ -75,12 +87,15 @@
         </geometry>
       </collision>
     </link>
-    <joint name="${parent_link}_to_clamp_${prefix}_joint" type="revolute">
+    <joint name="clamp_${prefix}_joint" type="revolute">
       <parent link="${parent_link}"/>
       <child link="clamp_${prefix}_link"/>
       <origin xyz="${joint_xyz}" rpy="${joint_rpy}"/> 
       <axis xyz="1 0 0"/>
       <limit lower="-${pi}" upper="${pi}" effort="20.0" velocity="2.0"/>
+      <xacro:if value="${mimic_joint != ''}">
+        <mimic joint="${mimic_joint}" multiplier="${mimic_multiplier}" offset="${mimic_offset}"/>
+      </xacro:if>
     </joint>
   </xacro:macro>
 
@@ -89,7 +104,7 @@
     <link name="swerve_mount_${prefix}_link">
       <visual> 
         <origin xyz="${mesh_xyz}" rpy="${mesh_rpy}"/>
-        <geometry><mesh filename="package://proxima_description/meshes/proxima/swerve_mount.stl" scale="${scale}"/></geometry>
+        <geometry><mesh filename="${mesh_swerve_mount}" scale="${scale}"/></geometry>
         <material name="gray_frame"/>
       </visual>
 
@@ -107,7 +122,7 @@
       </collision>
     </link>
 
-    <joint name="${parent_link}_to_swerve_mount_${prefix}_joint" type="fixed">
+    <joint name="swerve_mount_${prefix}_joint" type="fixed">
       <parent link="${parent_link}"/>
       <child link="swerve_mount_${prefix}_link"/>
       <origin xyz="${joint_xyz}" rpy="${joint_rpy}"/> 
@@ -115,7 +130,7 @@
 
     <!-- Virtual link purely to act as the steering Z-axis origin -->
     <link name="swerve_steer_${prefix}_link"/> 
-    <joint name="mount_to_steer_${prefix}_joint" type="fixed">
+    <joint name="swerve_steer_${prefix}_joint" type="fixed">
       <parent link="swerve_mount_${prefix}_link"/>
       <child link="swerve_steer_${prefix}_link"/>
       <origin xyz="${steer_xyz}" rpy="${steer_rpy}"/> 
@@ -127,7 +142,7 @@
     <link name="fork_${prefix}_link">
       <visual>
         <origin xyz="${mesh_xyz}" rpy="${mesh_rpy}"/>
-        <geometry><mesh filename="package://proxima_description/meshes/proxima/fork_2.stl" scale="${scale}"/></geometry>
+        <geometry><mesh filename="${mesh_fork_2}" scale="${scale}"/></geometry>
         <material name="white_frame"/>
       </visual>
 
@@ -160,7 +175,7 @@
 
     </link>
 
-    <joint name="steer_to_fork_${prefix}_joint" type="continuous">
+    <joint name="fork_${prefix}_joint" type="continuous">
       <parent link="${parent_link}"/>
       <child link="fork_${prefix}_link"/>
       <origin xyz="${joint_xyz}" rpy="${joint_rpy}"/>
@@ -174,7 +189,7 @@
     <link name="wheel_${prefix}_link">
       <visual>
         <origin xyz="${mesh_xyz}" rpy="${mesh_rpy}"/>
-        <geometry><mesh filename="package://proxima_description/meshes/proxima/wheel.stl" scale="${scale}"/></geometry>
+        <geometry><mesh filename="${mesh_wheel}" scale="${scale}"/></geometry>
         <material name="gray_frame">
           <color rgba="0.2 0.2 0.2 1.0"/>
         </material>
@@ -187,11 +202,11 @@
       </collision>
     </link>
 
-    <joint name="${parent_link}_to_wheel_${prefix}_joint" type="continuous">
+    <joint name="wheel_${prefix}_joint" type="continuous">
       <parent link="${parent_link}"/>
       <child link="wheel_${prefix}_link"/>
       <origin xyz="${joint_xyz}" rpy="${joint_rpy}"/>
-      <axis xyz="0 1 0"/> 
+      <axis xyz="1 0 0"/> 
     </joint>
   </xacro:macro>
   
@@ -207,7 +222,7 @@
     <visual>
       <origin xyz="${frame_mesh_xyz}" rpy="${frame_mesh_rpy}"/>
       <geometry>
-        <mesh filename="package://proxima_description/meshes/proxima/Frame_assemble.stl" scale="${scale}"/>
+        <mesh filename="${mesh_frame_assemble}" scale="${scale}"/>
       </geometry>
       <material name="white_frame"/>
     </visual>
@@ -222,11 +237,17 @@
     </collision>
   </link>
 
+  <joint name="base_to_main_frame_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="main_frame_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
   <!-- Right Hub (Keep joint 0,0,0 - only rotate the CAD mesh) -->
   <link name="hub_link_right">
     <visual>
       <origin xyz="0 0 0" rpy="${hub_mesh_rpy_right}"/>
-      <geometry><mesh filename="package://proxima_description/meshes/proxima/hub.stl" scale="${scale}"/></geometry>
+      <geometry><mesh filename="${mesh_hub}" scale="${scale}"/></geometry>
       <material name="gray_frame"/>
     </visual>
     <collision>
@@ -244,46 +265,49 @@
     <origin xyz="${hub_joint_xyz_right}" rpy="0 0 0"/> 
   </joint>
 
-<!-- FR Leg Assembly -->
-<xacro:rod_assembly prefix="fru" 
+<!-- Front Right Leg Assembly -->
+<xacro:rod_assembly prefix="front_right_upper" 
                       parent_link="hub_link_right" 
-                      joint_xyz="${rod_fru_joint_xyz}" 
-                      joint_rpy="0 0 ${fru_yaw}"
+                      joint_xyz="${rod_front_right_upper_joint_xyz}" 
+                      joint_rpy="0 0 ${front_right_upper_yaw}"
                       joint_axis="1 0 0"
                       mesh_xyz="0 0.015 0.005"
                       mesh_rpy="${2*pi/3.5} 0 0"/>
-<xacro:rod_assembly prefix="frl" 
+<xacro:rod_assembly prefix="front_right_lower" 
                       parent_link="hub_link_right" 
-                      joint_xyz="${rod_frl_joint_xyz}" 
-                      joint_rpy="0 0 ${fru_yaw}"
+                      joint_xyz="${rod_front_right_lower_joint_xyz}" 
+                      joint_rpy="0 0 ${front_right_upper_yaw}"
                       joint_axis="1 0 0"
                       mesh_xyz="0 0.015 0.005"
-                      mesh_rpy="${2*pi/3.5} 0 0"/>
+                      mesh_rpy="${2*pi/3.5} 0 0"
+                      mimic_joint="rod_front_right_upper_joint"/>
 
-<xacro:clamp_assembly prefix="fr" 
-                        parent_link="rod_fru_link" 
+<xacro:clamp_assembly prefix="front_right" 
+                        parent_link="rod_front_right_upper_link" 
                         joint_xyz="0 -0.31 -0.07" 
                         joint_rpy="0 0 0" 
                         mesh_xyz="0 -0.03 0.025" 
-                        mesh_rpy="-${pi/2} 0 0"/>
+                        mesh_rpy="-${pi/2} 0 0"
+                        mimic_joint="rod_front_right_upper_joint"
+                        mimic_multiplier="-1.0"/>
 
-<xacro:swerve_mount_assembly prefix="fr" 
-                               parent_link="clamp_fr_link" 
+<xacro:swerve_mount_assembly prefix="front_right" 
+                               parent_link="clamp_front_right_link" 
                                joint_xyz="0 0 0" 
                                joint_rpy="0 0 0" 
                                mesh_xyz="-0.038 -0.125 -0.0935" 
                                mesh_rpy="0 0 0"
                                steer_xyz="0 0 0"
                                steer_rpy="0 0 0"/>
-<xacro:fork_assembly prefix="fr" 
-                      parent_link="swerve_steer_fr_link" 
+<xacro:fork_assembly prefix="front_right" 
+                      parent_link="swerve_steer_front_right_link" 
                       joint_xyz="-0.005 -0.125 -0.1" 
-                      joint_rpy="0 0 ${-fru_yaw}" 
+                      joint_rpy="0 0 ${-front_right_upper_yaw}" 
                       mesh_xyz="-0.075 0 0" 
                       mesh_rpy="${pi/2} 0 ${pi/2}"
                       flag="true"/>
-<xacro:wheel_assembly prefix="fr" 
-                      parent_link="fork_fr_link" 
+<xacro:wheel_assembly prefix="front_right" 
+                      parent_link="fork_front_right_link" 
                       joint_xyz="0 0 -0.17" 
                       joint_rpy="0 0 0" 
                       mesh_xyz="0 0 0" 
@@ -295,16 +319,16 @@
 <xacro:property name="hub_joint_xyz_left"    value="0.15 -0.06 0.05"/>
 <xacro:property name="hub_mesh_rpy_left"     value="${pi/2} 0 ${pi/2}"/>
 
-<xacro:property name="flu_yaw"               value="${pi/9}"/>
-<xacro:property name="rod_flu_joint_xyz"     value="0.04 -0.07 0.025"/>  <!-- X negated from FR; verify Y -->
-<xacro:property name="rod_fll_joint_xyz"     value="0.04 -0.07 -0.025"/> <!-- Lower FL joint -->
-<xacro:property name="rod_flu_joint_rpy"     value="${current_rod_tilt} 1.21 0"/>  <!-- verify pitch sign -->
+<xacro:property name="front_left_upper_yaw"               value="${pi/9}"/>
+<xacro:property name="rod_front_left_upper_joint_xyz"     value="0.04 -0.07 0.025"/>  <!-- X negated from front right; verify Y -->
+<xacro:property name="rod_front_left_lower_joint_xyz"     value="0.04 -0.07 -0.025"/> <!-- Lower front left joint -->
+<xacro:property name="rod_front_left_upper_joint_rpy"     value="${current_rod_tilt} 1.21 0"/>  <!-- verify pitch sign -->
 
 <!-- Left Hub -->
 <link name="hub_link_left">
   <visual>
     <origin xyz="0 0 0" rpy="${hub_mesh_rpy_left}"/>
-    <geometry><mesh filename="package://proxima_description/meshes/proxima/hub.stl" scale="${scale}"/></geometry>
+    <geometry><mesh filename="${mesh_hub}" scale="${scale}"/></geometry>
     <material name="gray_frame"/>
   </visual>
       <collision>
@@ -322,32 +346,35 @@
   <origin xyz="${hub_joint_xyz_left}" rpy="0 0 0"/>
 </joint>
 
-<!-- FL Leg Assembly -->
-<xacro:rod_assembly prefix="flu"
+<!-- Front Left Leg Assembly -->
+<xacro:rod_assembly prefix="front_left_upper"
                     parent_link="hub_link_left"
-                    joint_xyz="${rod_flu_joint_xyz}"
-                    joint_rpy="0 0 ${flu_yaw}"
+                    joint_xyz="${rod_front_left_upper_joint_xyz}"
+                    joint_rpy="0 0 ${front_left_upper_yaw}"
                     joint_axis="1 0 0"
                     mesh_xyz="0 0.015 0.005"
                     mesh_rpy="${2*pi/3.5} 0 0"/>
 
-<xacro:rod_assembly prefix="fll"
+<xacro:rod_assembly prefix="front_left_lower"
                     parent_link="hub_link_left"
-                    joint_xyz="${rod_fll_joint_xyz}"
-                    joint_rpy="0 0 ${flu_yaw}"
+                    joint_xyz="${rod_front_left_lower_joint_xyz}"
+                    joint_rpy="0 0 ${front_left_upper_yaw}"
                     joint_axis="1 0 0"
                     mesh_xyz="0 0.015 0.005"
-                    mesh_rpy="${2*pi/3.5} 0 0"/>
+                    mesh_rpy="${2*pi/3.5} 0 0"
+                    mimic_joint="rod_front_left_upper_joint"/>
 
-<xacro:clamp_assembly prefix="fl"
-                      parent_link="rod_flu_link"
+<xacro:clamp_assembly prefix="front_left"
+                      parent_link="rod_front_left_upper_link"
                       joint_xyz="0 -0.31 -0.07"
                       joint_rpy="0 0 0"
                       mesh_xyz="0 -0.03 0.025"
-                      mesh_rpy="-${pi/2} 0 0"/>
+                      mesh_rpy="-${pi/2} 0 0"
+                      mimic_joint="rod_front_left_upper_joint"
+                      mimic_multiplier="-1.0"/>
 
-<xacro:swerve_mount_assembly prefix="fl"
-                             parent_link="clamp_fl_link"
+<xacro:swerve_mount_assembly prefix="front_left"
+                             parent_link="clamp_front_left_link"
                              joint_xyz="0 0 0"
                              joint_rpy="0 0 0"
                              mesh_xyz="-0.038 -0.125 -0.0935"
@@ -355,16 +382,16 @@
                              steer_xyz="0 0 0"
                              steer_rpy="0 0 0"/>
 
-<xacro:fork_assembly prefix="fl"
-                     parent_link="swerve_steer_fl_link"
+<xacro:fork_assembly prefix="front_left"
+                     parent_link="swerve_steer_front_left_link"
                      joint_xyz="-0.005 -0.125 -0.1"
-                     joint_rpy="0 0 ${-flu_yaw}"
+                     joint_rpy="0 0 ${-front_left_upper_yaw}"
                      mesh_xyz="0.075 0 0"
                      mesh_rpy="${pi/2} 0 -${pi/2}"
                      flag="false"/>
 
-<xacro:wheel_assembly prefix="fl"
-                      parent_link="fork_fl_link"
+<xacro:wheel_assembly prefix="front_left"
+                      parent_link="fork_front_left_link"
                       joint_xyz="0 0 -0.17"
                       joint_rpy="0 0 0"
                       mesh_xyz="0 0 0"
@@ -374,40 +401,43 @@
 <!-- REAR RIGHT LEG ASSEMBLY                    -->
 <!-- ========================================== -->
 
-<!-- RR-specific properties -->
-<xacro:property name="rru_yaw"            value="${pi+pi/9}"/>          <!-- mirrors fru_yaw sign -->
-<xacro:property name="rod_rru_joint_xyz"  value="-0.04 0.07 0.025"/> <!-- X negated from FR -->
-<xacro:property name="rod_rrl_joint_xyz"  value="-0.04 0.07 -0.025"/> <!-- Lower RR joint -->
-<xacro:property name="rod_rru_joint_rpy"  value="-${current_rod_tilt} 1.21 0"/> <!-- pitch negated for rear -->
+<!-- Rear Right specific properties -->
+<xacro:property name="rear_right_upper_yaw"            value="${pi+pi/9}"/>          <!-- mirrors front_right_upper_yaw sign -->
+<xacro:property name="rod_rear_right_upper_joint_xyz"  value="-0.04 0.07 0.025"/> <!-- X negated from front right -->
+<xacro:property name="rod_rear_right_lower_joint_xyz"  value="-0.04 0.07 -0.025"/> <!-- Lower rear right joint -->
+<xacro:property name="rod_rear_right_upper_joint_rpy"  value="-${current_rod_tilt} 1.21 0"/> <!-- pitch negated for rear -->
 
-<!-- RR Leg Assembly -->
-<xacro:rod_assembly prefix="rru"
+<!-- Rear Right Leg Assembly -->
+<xacro:rod_assembly prefix="rear_right_upper"
                     parent_link="hub_link_right"
-                    joint_xyz="${rod_rru_joint_xyz}"
-                    joint_rpy="0 0 ${rru_yaw}"
+                    joint_xyz="${rod_rear_right_upper_joint_xyz}"
+                    joint_rpy="0 0 ${rear_right_upper_yaw}"
                     joint_axis="1 0 0"
                     mesh_xyz="0 0.015 0.005"
                     mesh_rpy="${2*pi/3.5} 0 0"/>
 
-<xacro:rod_assembly prefix="rrl"
+<xacro:rod_assembly prefix="rear_right_lower"
                     parent_link="hub_link_right"
-                    joint_xyz="${rod_rrl_joint_xyz}"
-                    joint_rpy="0 0 ${rru_yaw}"
+                    joint_xyz="${rod_rear_right_lower_joint_xyz}"
+                    joint_rpy="0 0 ${rear_right_upper_yaw}"
                     joint_axis="1 0 0"
                     mesh_xyz="0 0.015 0.005"
-                    mesh_rpy="${2*pi/3.5} 0 0"/>
+                    mesh_rpy="${2*pi/3.5} 0 0"
+                    mimic_joint="rod_rear_right_upper_joint"/>
 
-<!-- RR Clamp -->
-<xacro:clamp_assembly prefix="rr"
-                      parent_link="rod_rru_link"
+<!-- Rear Right Clamp -->
+<xacro:clamp_assembly prefix="rear_right"
+                      parent_link="rod_rear_right_upper_link"
                       joint_xyz="0 -0.31 -0.07"
                       joint_rpy="0 0 0"
                       mesh_xyz="0 -0.03 0.025"
-                      mesh_rpy="-${pi/2} 0 0"/>
+                      mesh_rpy="-${pi/2} 0 0"
+                      mimic_joint="rod_rear_right_upper_joint"
+                      mimic_multiplier="-1.0"/>
 
-<!-- RR Swerve Mount -->
-<xacro:swerve_mount_assembly prefix="rr"
-                             parent_link="clamp_rr_link"
+<!-- Rear Right Swerve Mount -->
+<xacro:swerve_mount_assembly prefix="rear_right"
+                             parent_link="clamp_rear_right_link"
                              joint_xyz="0 0 0"
                              joint_rpy="0 0 0"
                              mesh_xyz="-0.038 -0.125 -0.0935"
@@ -415,18 +445,18 @@
                              steer_xyz="0 0 0"
                              steer_rpy="0 0 0"/>
 
-<!-- RR Fork — counter-rotates yaw, mesh X and Z-rotation flipped vs FR -->
-<xacro:fork_assembly prefix="rr"
-                     parent_link="swerve_steer_rr_link"
+<!-- Rear Right Fork — counter-rotates yaw, mesh X and Z-rotation flipped vs Front Right -->
+<xacro:fork_assembly prefix="rear_right"
+                     parent_link="swerve_steer_rear_right_link"
                      joint_xyz="-0.005 -0.125 -0.1"
-                     joint_rpy="0 0 ${-rru_yaw}"
+                     joint_rpy="0 0 ${-rear_right_upper_yaw}"
                      mesh_xyz="-0.075 0 0"
                      mesh_rpy="${pi/2} 0 ${pi/2}"
                      flag="true"/>
 
-<!-- RR Wheel -->
-<xacro:wheel_assembly prefix="rr"
-                      parent_link="fork_rr_link"
+<!-- Rear Right Wheel -->
+<xacro:wheel_assembly prefix="rear_right"
+                      parent_link="fork_rear_right_link"
                       joint_xyz="0 0 -0.17"
                       joint_rpy="0 0 0"
                       mesh_xyz="0 0 0"
@@ -436,40 +466,43 @@
 <!-- REAR LEFT LEG ASSEMBLY                     -->
 <!-- ========================================== -->
 
-<!-- RL-specific properties -->
-<xacro:property name="rlu_yaw"            value="${pi-pi/9}"/>         <!-- mirrors rru_yaw across X axis -->
-<xacro:property name="rod_rlu_joint_xyz"  value="0.04 0.07 0.025"/>   <!-- X negated from RR -->
-<xacro:property name="rod_rll_joint_xyz"  value="0.04 0.07 -0.025"/>  <!-- Lower RL joint -->
-<xacro:property name="rod_rlu_joint_rpy"  value="-${current_rod_tilt} 1.21 0"/> <!-- same pitch as RR -->
+<!-- Rear Left specific properties -->
+<xacro:property name="rear_left_upper_yaw"            value="${pi-pi/9}"/>         <!-- mirrors rear_right_upper_yaw across X axis -->
+<xacro:property name="rod_rear_left_upper_joint_xyz"  value="0.04 0.07 0.025"/>   <!-- X negated from rear right -->
+<xacro:property name="rod_rear_left_lower_joint_xyz"  value="0.04 0.07 -0.025"/>  <!-- Lower rear left joint -->
+<xacro:property name="rod_rear_left_upper_joint_rpy"  value="-${current_rod_tilt} 1.21 0"/> <!-- same pitch as rear right -->
 
-<!-- RL Leg Assembly -->
-<xacro:rod_assembly prefix="rlu"
+<!-- Rear Left Leg Assembly -->
+<xacro:rod_assembly prefix="rear_left_upper"
                     parent_link="hub_link_left"
-                    joint_xyz="${rod_rlu_joint_xyz}"
-                    joint_rpy="0 0 ${rlu_yaw}"
+                    joint_xyz="${rod_rear_left_upper_joint_xyz}"
+                    joint_rpy="0 0 ${rear_left_upper_yaw}"
                     joint_axis="1 0 0"
                     mesh_xyz="0 0.015 0.005"
                     mesh_rpy="${2*pi/3.5} 0 0"/>
 
-<xacro:rod_assembly prefix="rll"
+<xacro:rod_assembly prefix="rear_left_lower"
                     parent_link="hub_link_left"
-                    joint_xyz="${rod_rll_joint_xyz}"
-                    joint_rpy="0 0 ${rlu_yaw}"
+                    joint_xyz="${rod_rear_left_lower_joint_xyz}"
+                    joint_rpy="0 0 ${rear_left_upper_yaw}"
                     joint_axis="1 0 0"
                     mesh_xyz="0 0.015 0.005"
-                    mesh_rpy="${2*pi/3.5} 0 0"/>
+                    mesh_rpy="${2*pi/3.5} 0 0"
+                    mimic_joint="rod_rear_left_upper_joint"/>
 
-<!-- RL Clamp -->
-<xacro:clamp_assembly prefix="rl"
-                      parent_link="rod_rlu_link"
+<!-- Rear Left Clamp -->
+<xacro:clamp_assembly prefix="rear_left"
+                      parent_link="rod_rear_left_upper_link"
                       joint_xyz="0 -0.31 -0.07"
                       joint_rpy="0 0 0"
                       mesh_xyz="0 -0.03 0.025"
-                      mesh_rpy="-${pi/2} 0 0"/>
+                      mesh_rpy="-${pi/2} 0 0"
+                      mimic_joint="rod_rear_left_upper_joint"
+                      mimic_multiplier="-1.0"/>
 
-<!-- RL Swerve Mount -->
-<xacro:swerve_mount_assembly prefix="rl"
-                             parent_link="clamp_rl_link"
+<!-- Rear Left Swerve Mount -->
+<xacro:swerve_mount_assembly prefix="rear_left"
+                             parent_link="clamp_rear_left_link"
                              joint_xyz="0 0 0"
                              joint_rpy="0 0 0"
                              mesh_xyz="-0.038 -0.125 -0.0935"
@@ -477,18 +510,18 @@
                              steer_xyz="0 0 0"
                              steer_rpy="0 0 0"/>
 
-<!-- RL Fork — counter-rotates rlu_yaw, mesh X and Z-rotation flipped vs RR -->
-<xacro:fork_assembly prefix="rl"
-                     parent_link="swerve_steer_rl_link"
+<!-- Rear Left Fork — counter-rotates rear_left_upper_yaw, mesh X and Z-rotation flipped vs Rear Right -->
+<xacro:fork_assembly prefix="rear_left"
+                     parent_link="swerve_steer_rear_left_link"
                      joint_xyz="-0.005 -0.125 -0.1"
-                     joint_rpy="0 0 ${-rlu_yaw}"
+                     joint_rpy="0 0 ${-rear_left_upper_yaw}"
                      mesh_xyz="0.075 0 0"
                      mesh_rpy="${pi/2} 0 -${pi/2}"
                      flag="false"/>
 
-<!-- RL Wheel -->
-<xacro:wheel_assembly prefix="rl"
-                      parent_link="fork_rl_link"
+<!-- Rear Left Wheel -->
+<xacro:wheel_assembly prefix="rear_left"
+                      parent_link="fork_rear_left_link"
                       joint_xyz="-0.02 0 -0.17"
                       joint_rpy="0 0 0"
                       mesh_xyz="0 0 0"
