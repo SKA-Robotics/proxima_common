@@ -20,7 +20,9 @@ Now that rviz is running, change `Fixed Frame` to `base_link` in the top right c
 next click `Add` from the bottom left corner, select `RobotModel` and click `OK`:
 ![Fixed Frame location in rviz](readme_graphics/adding_model.png)
 In the `Displays` a new `RobotModel` section shoud appear, expand it and change `Description Topic` to `/robot_description`
+
 ![Fixed Frame location in rviz](readme_graphics/desc_topic.png)
+
 After you click somewhere else on the screen, rvis will update the visualization and display proxima. you can change joint states with `Joint State Publisher` that appeared in another window. Enjoy!!
 ![Proxima with random position](readme_graphics/proxima_random.png)
 ### Topics
