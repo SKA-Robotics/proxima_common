@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="proxima">
+  
+  <xacro:arg name="manipulator" default="none"/>
+  <xacro:property name="manipulator" value="$(arg manipulator)"/>
+
+  <xacro:property name="manipulator_mount_xyz" value="0 -0.2 0.037"/>
+  <xacro:property name="manipulator_mount_rpy" value="0 0 0"/>
+
+  <xacro:include filename="$(find proxima_description)/urdf/proxima_base.urdf.xacro"/>
+
+  <xacro:if value="${manipulator == '6DOF'}">
+    
+    <xacro:include filename="$(find proxima_description)/urdf/6DOF.urdf.xacro"/>
+
+    <xacro:six_dof_arm_macro/>
+
+    <joint name="base_to_manipulator_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="root_link"/>
+      <origin xyz="${manipulator_mount_xyz}" rpy="${manipulator_mount_rpy}"/>
+    </joint>
+    
+  </xacro:if>
+  
+</robot>
