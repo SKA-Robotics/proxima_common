@@ -23,7 +23,7 @@ In the `Displays` a new `RobotModel` section shoud appear, expand it and change 
 ![Fixed Frame location in rviz](readme_graphics/desc_topic.png)
 After you click somewhere else on the screen, rvis will update the visualization and display proxima. you can change joint states with `Joint State Publisher` that appeared in another window. Enjoy!!
 ![Proxima with random position](readme_graphics/proxima_random.png)
-
+### Topics
 List of all joints in proxima:
 - rod_front_right_upper_joint
 - fork_front_right_joint
