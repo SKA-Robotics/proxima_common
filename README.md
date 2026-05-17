@@ -5,9 +5,46 @@ Packages common to both physical and simulated Proxima robot.
 
 W `proxima_description/` (katalogi `config/`, `launch/`, `robots/`) są pliki `moteus_test*`: szybko wygenerowany xacro i launch do testu samego manipulatora (3 × moteus, CAN ID 1–3).
 
+<<<<<<< HEAD
 Stan kodu: `MoteusSystem` łączy się z moteusami i odczytuje pozycję, prędkość i moment. `write()` nie jest jeszcze zaimplementowany, więc silniki się **nie ruszają**.
 
 ### Przygotowanie (jednorazowo)
+=======
+```
+colcon build --packages-select proxima_description
+source install/setup.bash # or .zsh
+```
+with that you can run proxima with an arm:
+```
+ros2 launch proxima_description display.launch.py manipulator:=6DOF
+```
+or without:
+```
+ros2 launch proxima_description display.launch.py
+```
+Now that rviz is running, change `Fixed Frame` to `base_link` in the top right corner:
+![Fixed Frame location in rviz](readme_graphics/fixed_frame.png)
+next click `Add` from the bottom left corner, select `RobotModel` and click `OK`:
+![Fixed Frame location in rviz](readme_graphics/adding_model.png)
+In the `Displays` a new `RobotModel` section shoud appear, expand it and change `Description Topic` to `/robot_description`
+![Fixed Frame location in rviz](readme_graphics/desc_topic.png)
+After you click somewhere else on the screen, rvis will update the visualization and display proxima. you can change joint states with `Joint State Publisher` that appeared in another window. Enjoy!!
+![Proxima with random position](readme_graphics/proxima_random.png)
+### Topics
+List of all joints in proxima:
+- rod_front_right_upper_joint
+- fork_front_right_joint
+- wheel_front_right_joint
+- rod_front_left_upper_joint
+- fork_front_left_joint
+- wheel_front_left_joint
+- rod_rear_right_upper_joint
+- fork_rear_right_joint
+- wheel_rear_right_joint
+- rod_rear_left_upper_joint
+- fork_rear_left_joint
+- wheel_rear_left_joint
+>>>>>>> 2caf3bb (lord have mercy on my poor soul 🙏)
 
 Dostęp do fdcanusb bez roota:
 ```bash
