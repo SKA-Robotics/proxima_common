@@ -12,7 +12,9 @@
   <xacro:property name="mesh_swerve_mount" value="package://proxima_description/meshes/proxima/swerve_mount.stl"/>
   <xacro:property name="mesh_fork_2" value="package://proxima_description/meshes/proxima/fork_2.stl"/>
   <xacro:property name="mesh_wheel" value="package://proxima_description/meshes/proxima/wheel.stl"/>
-  <xacro:property name="mesh_frame_assemble" value="package://proxima_description/meshes/proxima/Frame_assemble.stl"/>
+  <xacro:property name="mesh_frame_assemble" value="package://proxima_description/meshes/proxima/frame_optimized.stl"/>
+    <!-- <xacro:property name="mesh_frame_assemble" value="package://proxima_description/meshes/proxima/Frame_assemble.stl"/> --> <!-- Original mesh with more detail-->
+
   <xacro:property name="mesh_hub" value="package://proxima_description/meshes/proxima/hub.stl"/>
   
   <xacro:property name="frame_mesh_xyz" value="-0.12 0 -0.105"/>
@@ -222,7 +224,7 @@
     <visual>
       <origin xyz="${frame_mesh_xyz}" rpy="${frame_mesh_rpy}"/>
       <geometry>
-        <mesh filename="${mesh_frame_assemble}" scale="${scale}"/>
+        <mesh filename="${mesh_frame_assemble}" scale="1 1 1"/>
       </geometry>
       <material name="white_frame"/>
     </visual>
