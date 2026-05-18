@@ -189,7 +189,7 @@
     <link name="wheel_${prefix}_link">
       <visual>
         <origin xyz="${mesh_xyz}" rpy="${mesh_rpy}"/>
-        <geometry><mesh filename="${mesh_wheel}" scale="${scale}"/></geometry>
+        <geometry><mesh filename="${mesh_wheel}" scale="1 1 1"/></geometry>
         <material name="gray_frame">
           <color rgba="0.2 0.2 0.2 1.0"/>
         </material>
@@ -308,7 +308,7 @@
                       flag="true"/>
 <xacro:wheel_assembly prefix="front_right" 
                       parent_link="fork_front_right_link" 
-                      joint_xyz="0 0 -0.17" 
+                      joint_xyz="0.02 0 -0.17" 
                       joint_rpy="0 0 0" 
                       mesh_xyz="0 0 0" 
                       mesh_rpy="0 -${pi/2} 0"/>
@@ -392,7 +392,7 @@
 
 <xacro:wheel_assembly prefix="front_left"
                       parent_link="fork_front_left_link"
-                      joint_xyz="0 0 -0.17"
+                      joint_xyz="-0.02 0 -0.17"
                       joint_rpy="0 0 0"
                       mesh_xyz="0 0 0"
                       mesh_rpy="0 -${pi/2} 0"/>
@@ -457,7 +457,7 @@
 <!-- Rear Right Wheel -->
 <xacro:wheel_assembly prefix="rear_right"
                       parent_link="fork_rear_right_link"
-                      joint_xyz="0 0 -0.17"
+                      joint_xyz="0.02 0 -0.17"
                       joint_rpy="0 0 0"
                       mesh_xyz="0 0 0"
                       mesh_rpy="0 -${pi/2} 0"/>
