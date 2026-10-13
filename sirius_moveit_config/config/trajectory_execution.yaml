@@ -1,0 +1,8 @@
+# Parameters for move_group trajectory execution manager
+trajectory_execution:
+  allowed_execution_duration_scaling: 5.0
+  allowed_goal_duration_margin: 10.0
+  allowed_start_tolerance: 0.05
+  execution_duration_monitoring: true
+
+moveit_manage_controllers: true

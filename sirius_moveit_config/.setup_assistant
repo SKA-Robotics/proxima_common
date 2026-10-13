@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: sirius_description
+    relative_path: robots/sirius_final.urdf
+  srdf:
+    relative_path: config/sirius.srdf
+  package_settings:
+    author_name: Klaudia Niedziałkowska
+    author_email: klaudianiedzi@gmail.com
+    generated_timestamp: 1786047204
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
