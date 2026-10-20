@@ -15,6 +15,7 @@ FetchContent_MakeAvailable(moteus)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/moteus_system.cpp
+  src/dynamixel_system.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} moteus::cpp)
