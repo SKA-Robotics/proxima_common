@@ -4,9 +4,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <limits>
 
-#include "hardware_interface/handle.hpp"
-#include "hardware_interface/hardware_info.hpp"
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "rclcpp/macros.hpp"
@@ -18,11 +17,26 @@
 namespace proxima_manip_controller
 {
 
+struct MoteusJoint
+{
+  int can_id = -1;
+  std::shared_ptr<mjbots::moteus::Controller> controller;  // tworzony dopiero w on_configure
+  mjbots::moteus::Query::Result last_result;  // ostatni sparsowany stan z odpowiedzi moteusa,
+  bool got_answer = false;
+  int cycles_without_answer = 0;
+
+  std::string joint_position_interface;
+  std::string joint_velocity_interface;
+  std::string joint_effort_interface;
+  //gotowe nazwy interfejsów tego jointa („joint1/position” itd.), zbudowane raz,
+  double effort_max = std::numeric_limits<double>::quiet_NaN(); // limit momentu z URDF.
+};
+
 class MoteusSystem : public hardware_interface::SystemInterface
 {
 public:
   hardware_interface::CallbackReturn on_init(
-    const hardware_interface::HardwareInfo & info) override;
+    const hardware_interface::HardwareComponentInterfaceParams & params) override;
 
   hardware_interface::CallbackReturn on_configure(
     const rclcpp_lifecycle::State & previous_state) override;
@@ -33,9 +47,14 @@ public:
   hardware_interface::CallbackReturn on_deactivate(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
-  
-  std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
+  hardware_interface::CallbackReturn on_cleanup(
+    const rclcpp_lifecycle::State & previous_state) override;
+
+  hardware_interface::CallbackReturn on_shutdown(
+    const rclcpp_lifecycle::State & previous_state) override;
+
+  hardware_interface::CallbackReturn on_error(
+    const rclcpp_lifecycle::State & previous_state) override;
 
   hardware_interface::return_type read(
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
@@ -44,8 +63,12 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  std::vector<double> hw_commands_;
-  std::vector<double> hw_states_;
+
+  std::vector<MoteusJoint> joints_;
+  std::vector<mjbots::moteus::CanFdFrame> frames_to_send_;
+  std::vector<mjbots::moteus::CanFdFrame> answer_frames_;
+
+  std::shared_ptr<mjbots::moteus::Transport> transport_;
 };
 
 }  // namespace proxima_manip_controller
