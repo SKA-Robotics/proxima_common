@@ -97,7 +97,6 @@ hardware_interface::CallbackReturn MoteusSystem::on_configure(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
   // TODO: implement
-
   try
   {
     transport_ = mjbots::moteus::Controller::MakeSingletonTransport({});
@@ -105,10 +104,44 @@ hardware_interface::CallbackReturn MoteusSystem::on_configure(
   catch(const std::exception& e)
   {
     RCLCPP_ERROR(
-      get_logger(), e.what()
+      get_logger(), "%s",
+      e.what()
     );
     return hardware_interface::CallbackReturn::ERROR;
   }
+
+  for (auto& joint : joints_) {
+    mjbots::moteus::Controller::Options options;
+    options.id = joint.can_id;
+    options.transport = transport_;
+
+    joint.controller = std::make_shared<mjbots::moteus::Controller>(options);
+  }
+
+  for (auto& joint : joints_) {
+  std::optional<mjbots::moteus::Controller::Result> result;
+  try {
+    result = joint.controller->SetStop();
+  } catch (const std::exception& e) {
+    RCLCPP_ERROR(get_logger(), "CAN error for id %d: %s", joint.can_id, e.what());
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  if (!result) {
+    RCLCPP_ERROR(get_logger(), "No reply from moteus id %d.", joint.can_id);
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  const auto& v = result->values;
+  if (v.mode == mjbots::moteus::Mode::kFault) {
+    RCLCPP_ERROR(get_logger(), "Moteus id %d in fault, code %d.", joint.can_id, v.fault);
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  RCLCPP_INFO(get_logger(), "Moteus id %d OK: pos=%.3f rev, Vbus=%.1f V, temp=%.1f C",
+              joint.can_id, v.position, v.voltage, v.temperature);
+  joint.last_result = v;
+}
 
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -149,9 +182,29 @@ hardware_interface::CallbackReturn MoteusSystem::on_error(
 }
 
 hardware_interface::return_type MoteusSystem::read(
-  const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+  const rclcpp::Time &, const rclcpp::Duration &)
 {
-  // TODO: implement
+  std::vector<mjbots::moteus::CanFdFrame> frames;
+  for (auto& joint : joints_) {
+    frames.push_back(joint.controller->MakeQuery());
+  }
+
+  std::vector<mjbots::moteus::CanFdFrame> replies;
+  transport_->BlockingCycle(frames.data(), frames.size(), &replies);
+
+  for (const auto& frame : replies) {
+    for (auto& joint : joints_) {
+      if (frame.source != joint.can_id) { continue; }
+      joint.last_result = mjbots::moteus::Query::Parse(frame.data, frame.size);
+    }
+  }
+
+  constexpr double kTwoPi = 2.0 * M_PI;
+  for (auto& joint : joints_) {
+    set_state(joint.joint_position_interface, joint.last_result.position * kTwoPi);  // rev -> rad
+    set_state(joint.joint_velocity_interface, joint.last_result.velocity * kTwoPi);  // rev/s -> rad/s
+    set_state(joint.joint_effort_interface, joint.last_result.torque);               // Nm
+  }
   return hardware_interface::return_type::OK;
 }
 
