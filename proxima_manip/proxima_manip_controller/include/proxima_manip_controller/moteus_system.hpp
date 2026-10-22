@@ -20,16 +20,15 @@ namespace proxima_manip_controller
 struct MoteusJoint
 {
   int can_id = -1;
-  std::shared_ptr<mjbots::moteus::Controller> controller;  // tworzony dopiero w on_configure
-  mjbots::moteus::Query::Result last_result;  // ostatni sparsowany stan z odpowiedzi moteusa,
+  std::shared_ptr<mjbots::moteus::Controller> controller;
+  mjbots::moteus::Query::Result last_result;
   bool got_answer = false;
   int cycles_without_answer = 0;
 
   std::string joint_position_interface;
   std::string joint_velocity_interface;
   std::string joint_effort_interface;
-  //gotowe nazwy interfejsów tego jointa („joint1/position” itd.), zbudowane raz,
-  double effort_max = std::numeric_limits<double>::quiet_NaN(); // limit momentu z URDF.
+  double effort_max = std::numeric_limits<double>::quiet_NaN();
 };
 
 class MoteusSystem : public hardware_interface::SystemInterface

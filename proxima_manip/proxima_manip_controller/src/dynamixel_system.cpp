@@ -4,9 +4,9 @@ namespace proxima_manip_controller
 {
 
 hardware_interface::CallbackReturn DynamixelSystem::on_init(
-  const hardware_interface::HardwareInfo & info)
+  const hardware_interface::HardwareComponentInterfaceParams & params)
 {
-  if (hardware_interface::SystemInterface::on_init(info) !=
+  if (hardware_interface::SystemInterface::on_init(params) !=
     hardware_interface::CallbackReturn::SUCCESS)
   {
     return hardware_interface::CallbackReturn::ERROR;
@@ -37,16 +37,25 @@ hardware_interface::CallbackReturn DynamixelSystem::on_deactivate(
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-std::vector<hardware_interface::StateInterface> DynamixelSystem::export_state_interfaces()
+hardware_interface::CallbackReturn DynamixelSystem::on_cleanup(
+  const rclcpp_lifecycle::State & /*previous_state*/)
 {
   // TODO: implement
-  return {};
+  return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-std::vector<hardware_interface::CommandInterface> DynamixelSystem::export_command_interfaces()
+hardware_interface::CallbackReturn DynamixelSystem::on_shutdown(
+  const rclcpp_lifecycle::State & /*previous_state*/)
 {
   // TODO: implement
-  return {};
+  return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+hardware_interface::CallbackReturn DynamixelSystem::on_error(
+  const rclcpp_lifecycle::State & /*previous_state*/)
+{
+  // TODO: implement
+  return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 hardware_interface::return_type DynamixelSystem::read(

@@ -1,0 +1,20 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz – na test połączenia w zupełności wystarczy
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    # Zdefiniowany, ale NIE uruchamiany w launchu testowym (write() jest jeszcze pusty).
+    # Gdy zaimplementujesz write(), możesz go włączyć:
+    #   ros2 run controller_manager spawner forward_position_controller
+    forward_position_controller:
+      type: forward_command_controller/ForwardCommandController
+
+forward_position_controller:
+  ros__parameters:
+    joints:
+      - joint1
+      - joint2
+      - joint3
+    interface_name: position

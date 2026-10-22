@@ -19,7 +19,7 @@ hardware_interface::CallbackReturn MoteusSystem::on_init(
 
   if(info_.joints.size() != 3)
   {
-    RCLCPP_ERROR(rclcpp::get_logger(""), "Invalid number of Moteus joints.");
+    RCLCPP_ERROR(get_logger(), "Invalid number of Moteus joints.");
     return hardware_interface::CallbackReturn::ERROR;
   }
 
@@ -28,8 +28,19 @@ hardware_interface::CallbackReturn MoteusSystem::on_init(
   {
     MoteusJoint new_joint = MoteusJoint();
 
-    int can_id = std::stoi(joint.parameters.at("can_id"));
-    double effort_max = std::stod(joint.parameters.at("effort_max"));
+    int can_id;
+    double effort_max;
+
+    try
+    {
+      can_id = std::stoi(joint.parameters.at("can_id"));
+      effort_max = std::stod(joint.parameters.at("effort_max"));
+    }
+    catch(const std::exception& e)
+    {
+      RCLCPP_ERROR(get_logger(), "Invalid type of moteus config variables.");
+      return hardware_interface::CallbackReturn::ERROR;
+    }
 
     if(joint.command_interfaces.size() != 1)
     {
@@ -119,28 +130,28 @@ hardware_interface::CallbackReturn MoteusSystem::on_configure(
   }
 
   for (auto& joint : joints_) {
-  std::optional<mjbots::moteus::Controller::Result> result;
-  try {
-    result = joint.controller->SetStop();
-  } catch (const std::exception& e) {
-    RCLCPP_ERROR(get_logger(), "CAN error for id %d: %s", joint.can_id, e.what());
-    return hardware_interface::CallbackReturn::ERROR;
-  }
+    mjbots::moteus::Optional<mjbots::moteus::Controller::Result> result;
+    try {
+      result = joint.controller->SetStop();
+    } catch (const std::exception& e) {
+      RCLCPP_ERROR(get_logger(), "CAN error for id %d: %s", joint.can_id, e.what());
+      return hardware_interface::CallbackReturn::ERROR;
+    }
 
-  if (!result) {
-    RCLCPP_ERROR(get_logger(), "No reply from moteus id %d.", joint.can_id);
-    return hardware_interface::CallbackReturn::ERROR;
-  }
+    if (!result) {
+      RCLCPP_ERROR(get_logger(), "No reply from moteus id %d.", joint.can_id);
+      return hardware_interface::CallbackReturn::ERROR;
+    }
 
-  const auto& v = result->values;
-  if (v.mode == mjbots::moteus::Mode::kFault) {
-    RCLCPP_ERROR(get_logger(), "Moteus id %d in fault, code %d.", joint.can_id, v.fault);
-    return hardware_interface::CallbackReturn::ERROR;
-  }
+    const auto& v = result->values;
+    if (v.mode == mjbots::moteus::Mode::kFault) {
+      RCLCPP_ERROR(get_logger(), "Moteus id %d in fault, code %d.", joint.can_id, v.fault);
+      return hardware_interface::CallbackReturn::ERROR;
+    }
 
-  RCLCPP_INFO(get_logger(), "Moteus id %d OK: pos=%.3f rev, Vbus=%.1f V, temp=%.1f C",
-              joint.can_id, v.position, v.voltage, v.temperature);
-  joint.last_result = v;
+    RCLCPP_INFO(get_logger(), "Moteus id %d OK: pos=%.3f rev, Vbus=%.1f V, temp=%.1f C",
+                joint.can_id, v.position, v.voltage, v.temperature);
+    joint.last_result = v;
 }
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -184,18 +195,69 @@ hardware_interface::CallbackReturn MoteusSystem::on_error(
 hardware_interface::return_type MoteusSystem::read(
   const rclcpp::Time &, const rclcpp::Duration &)
 {
+  constexpr int kMaxCyclesWithoutAnswer = 10;
+
   std::vector<mjbots::moteus::CanFdFrame> frames;
   for (auto& joint : joints_) {
+    joint.got_answer = false;
     frames.push_back(joint.controller->MakeQuery());
   }
 
   std::vector<mjbots::moteus::CanFdFrame> replies;
-  transport_->BlockingCycle(frames.data(), frames.size(), &replies);
+
+  try
+  {
+    transport_->BlockingCycle(frames.data(), frames.size(), &replies);
+  }
+  catch(const std::exception& e)
+  {
+    RCLCPP_ERROR(
+      get_logger(),
+      "CAN transport error: %s", e.what()
+    );
+    return hardware_interface::return_type::ERROR;
+  }
+
 
   for (const auto& frame : replies) {
     for (auto& joint : joints_) {
       if (frame.source != joint.can_id) { continue; }
       joint.last_result = mjbots::moteus::Query::Parse(frame.data, frame.size);
+      joint.got_answer = true;
+    }
+  }
+
+  for (auto& joint : joints_)
+  {
+    if (joint.got_answer)
+    {
+      if (joint.cycles_without_answer > 0)
+      {
+        RCLCPP_INFO(get_logger(), "Moteus id %d answering again.",
+                     joint.can_id);
+      }
+      joint.cycles_without_answer = 0;
+    }
+    else
+    {
+      joint.cycles_without_answer++;
+      if (joint.cycles_without_answer == 1)
+      {
+        RCLCPP_WARN(get_logger(), "No reply from moteus id %d.",
+                     joint.can_id);
+      }
+      if (joint.cycles_without_answer >= kMaxCyclesWithoutAnswer)
+      {
+        RCLCPP_ERROR(get_logger(), "Moteus id %d silent for %d cycles, giving up.",
+                     joint.can_id, joint.cycles_without_answer);
+        return hardware_interface::return_type::ERROR;
+      }
+    }
+
+    if (joint.last_result.mode == mjbots::moteus::Mode::kFault) {
+      RCLCPP_ERROR(get_logger(), "Moteus id %d in fault, code %d.",
+                   joint.can_id, joint.last_result.fault);
+      return hardware_interface::return_type::ERROR;
     }
   }
 

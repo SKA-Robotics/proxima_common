@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!--
+  Blok ros2_control dla MoteusSystem.
+  Kolejność interfejsów MUSI zgadzać się z tym, co sprawdza MoteusSystem::on_init:
+    command: position
+    state:   position, velocity, effort  (dokładnie w tej kolejności)
+  Każdy przegub wymaga parametrów can_id i effort_max.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="moteus_joint_interfaces" params="name can_id effort_max">
+    <joint name="${name}">
+      <param name="can_id">${can_id}</param>
+      <param name="effort_max">${effort_max}</param>
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="proxima_manip_ros2_control"
+               params="name use_mock_hardware can_id_1 can_id_2 can_id_3 effort_max">
+
+    <ros2_control name="${name}" type="system">
+      <hardware>
+        <xacro:if value="${use_mock_hardware}">
+          <!-- Test bez sprzętu: sprawdza URDF, launch i kontrolery -->
+          <plugin>mock_components/GenericSystem</plugin>
+          <param name="calculate_dynamics">false</param>
+        </xacro:if>
+        <xacro:unless value="${use_mock_hardware}">
+          <plugin>proxima_manip_controller/MoteusSystem</plugin>
+        </xacro:unless>
+      </hardware>
+
+      <xacro:moteus_joint_interfaces name="joint1" can_id="${can_id_1}" effort_max="${effort_max}"/>
+      <xacro:moteus_joint_interfaces name="joint2" can_id="${can_id_2}" effort_max="${effort_max}"/>
+      <xacro:moteus_joint_interfaces name="joint3" can_id="${can_id_3}" effort_max="${effort_max}"/>
+    </ros2_control>
+
+  </xacro:macro>
+
+</robot>

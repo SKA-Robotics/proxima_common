@@ -6,7 +6,6 @@ ament_auto_find_build_dependencies()
 
 install(DIRECTORY
   launch
-  urdf
   meshes
   robots
   config

@@ -1,9 +1,13 @@
 <library path="proxima_manip_controller">
+  <class name="proxima_manip_controller/DynamixelSystem"
+         type="proxima_manip_controller::DynamixelSystem"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>...</description>
+  </class>
+
   <class name="proxima_manip_controller/MoteusSystem"
          type="proxima_manip_controller::MoteusSystem"
          base_class_type="hardware_interface::SystemInterface">
-    <description>
-      Hardware plugin for first three joints in Proxima rover manipulator.
-    </description>
+    <description>ros2_control hardware interface for mjbots moteus controllers.</description>
   </class>
 </library>

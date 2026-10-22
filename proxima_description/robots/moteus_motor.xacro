@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<!--
+  Makro jednego silnika moteus:
+    <name>_housing  – nieruchomy korpus (przykręcony do parent)
+    <name>          – przegub obrotowy (continuous) wokół osi Z
+    <name>_output   – wyjście wału z „wskazówką”, żeby w RViz było widać obrót
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="motor_radius" value="0.045"/>
+  <xacro:property name="motor_length" value="0.04"/>
+  <xacro:property name="motor_mass" value="0.4"/>
+
+  <xacro:macro name="moteus_motor" params="name parent xyz rpy:='0 0 0'">
+
+    <!-- Korpus silnika -->
+    <joint name="${name}_mount" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${name}_housing"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <link name="${name}_housing">
+      <visual>
+        <origin xyz="0 0 ${motor_length/2}" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${motor_radius}" length="${motor_length}"/>
+        </geometry>
+        <material name="motor_black">
+          <color rgba="0.15 0.15 0.15 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${motor_length/2}" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${motor_radius}" length="${motor_length}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 ${motor_length/2}" rpy="0 0 0"/>
+        <mass value="${motor_mass}"/>
+        <inertia
+          ixx="${motor_mass*(3*motor_radius*motor_radius + motor_length*motor_length)/12}"
+          iyy="${motor_mass*(3*motor_radius*motor_radius + motor_length*motor_length)/12}"
+          izz="${motor_mass*motor_radius*motor_radius/2}"
+          ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+
+    <!-- Przegub sterowany przez moteus -->
+    <joint name="${name}" type="continuous">
+      <parent link="${name}_housing"/>
+      <child link="${name}_output"/>
+      <origin xyz="0 0 ${motor_length}" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <dynamics damping="0.0" friction="0.0"/>
+    </joint>
+
+    <link name="${name}_output">
+      <!-- tarcza wyjściowa -->
+      <visual>
+        <origin xyz="0 0 0.0025" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${motor_radius*0.6}" length="0.005"/>
+        </geometry>
+        <material name="output_silver">
+          <color rgba="0.8 0.8 0.85 1.0"/>
+        </material>
+      </visual>
+      <!-- wskazówka pokazująca kąt -->
+      <visual>
+        <origin xyz="${motor_radius*0.5} 0 0.0075" rpy="0 0 0"/>
+        <geometry>
+          <box size="${motor_radius} 0.008 0.005"/>
+        </geometry>
+        <material name="indicator_red">
+          <color rgba="0.9 0.1 0.1 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0.0025" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${motor_radius*0.6}" length="0.005"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0.0025" rpy="0 0 0"/>
+        <mass value="0.05"/>
+        <inertia ixx="0.00001" iyy="0.00001" izz="0.00002" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+
+  </xacro:macro>
+
+</robot>
