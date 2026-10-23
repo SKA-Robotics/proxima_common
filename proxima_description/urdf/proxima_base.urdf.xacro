@@ -3,6 +3,9 @@
 
   <!-- Mesh filenames -->
   <xacro:property name="mesh_platform" value="package://proxima_description/meshes/proxima/platform.stl"/>
+  <xacro:property name="mesh_platform_collision" value="package://proxima_description/meshes/proxima/platform_collision.stl"/>
+
+
   <xacro:property name="mesh_fork" value="package://proxima_description/meshes/proxima/fork.stl"/>
   <xacro:property name="mesh_wheel" value="package://proxima_description/meshes/proxima/wheel.stl"/>
 
@@ -29,7 +32,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <box size="0.3 0.7 0.25"/> 
+        <mesh filename="${mesh_platform_collision}" scale="1 1 1"/>
       </geometry>
     </collision>
   </link>
@@ -69,7 +72,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="${mesh_wheel}" scale="1 1 1"/>
+          <cylinder radius="0.12" length="0.12"/>
         </geometry>
         <material name="proxima_color"/>
       </visual>
@@ -77,7 +80,7 @@
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="${mesh_wheel}" scale="1 1 1"/>
+          <cylinder radius="0.12" length="0.12"/>
         </geometry>
       </collision>
     </link>
