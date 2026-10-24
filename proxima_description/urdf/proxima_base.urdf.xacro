@@ -7,7 +7,6 @@
 
 
   <xacro:property name="mesh_fork" value="package://proxima_description/meshes/proxima/fork.stl"/>
-  <xacro:property name="mesh_wheel" value="package://proxima_description/meshes/proxima/wheel.stl"/>
 
   <!-- Materials -->
 

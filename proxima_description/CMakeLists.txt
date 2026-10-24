@@ -8,6 +8,7 @@ install(DIRECTORY
   launch
   meshes
   robots
+  urdf
   config
   DESTINATION share/${PROJECT_NAME}
 )

@@ -8,11 +8,11 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
     package_name = 'proxima_description'
-    xacro_file_name = 'proxima.urdf.xacro' 
-    
+    xacro_file_name = 'proxima.urdf.xacro'
+
     pkg_path = get_package_share_directory(package_name)
-    # Make sure this matches where your file actually is (urdf vs robots)
     xacro_path = os.path.join(pkg_path, 'robots', xacro_file_name)
+    default_rviz_config = os.path.join(pkg_path, 'config', 'manip_visualization.rviz')
 
     manipulator_version_arg = DeclareLaunchArgument(
         'manipulator',
@@ -20,35 +20,52 @@ def generate_launch_description():
         description='Manipulator version'
     )
 
+    manipulator_only_arg = DeclareLaunchArgument(
+        'manipulator_only',
+        default_value='false',
+        description='Only include manipulator, not base'
+    )
+
+    rviz_config_arg = DeclareLaunchArgument(
+        'rviz_config',
+        default_value=default_rviz_config,
+        description='Path to RViz config file'
+    )
+
     robot_description = ParameterValue(
-        Command(['xacro ', xacro_path, ' manipulator:=', LaunchConfiguration('manipulator')]),
+        Command([
+            'xacro ', xacro_path,
+            ' manipulator:=', LaunchConfiguration('manipulator'),
+            ' manipulator_only:=', LaunchConfiguration('manipulator_only')
+        ]),
         value_type=str
     )
 
-    # 1. The Core Publisher (You already had this)
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         parameters=[{'robot_description': robot_description}]
     )
 
-    # 2. The Slider GUI for moving joints
+    # Slider GUI for moving joints
     joint_state_publisher_gui_node = Node(
         package='joint_state_publisher_gui',
         executable='joint_state_publisher_gui',
         name='joint_state_publisher_gui'
     )
 
-    # 3. RViz2 for 3D visualization
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
         name='rviz2',
-        output='screen'
+        output='screen',
+        arguments=['-d', LaunchConfiguration('rviz_config')]
     )
 
     return LaunchDescription([
         manipulator_version_arg,
+        manipulator_only_arg,
+        rviz_config_arg,
         robot_state_publisher_node,
         joint_state_publisher_gui_node,
         rviz_node

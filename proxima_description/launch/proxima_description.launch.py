@@ -20,10 +20,17 @@ def generate_launch_description():
         description='Manipulator version'
     )
 
+    manipulator_only_arg = DeclareLaunchArgument(
+        'manipulator_only',
+        default_value='false',
+        description='Only include manipulator, not base'
+    )
+
     robot_description = ParameterValue(
         Command([
             'xacro ', xacro_path,
-            ' manipulator:=', LaunchConfiguration('manipulator')
+            ' manipulator:=', LaunchConfiguration('manipulator'),
+            ' manipulator_only:=', LaunchConfiguration('manipulator_only')
         ]),
         value_type=str
     )
@@ -45,6 +52,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         manipulator_version_arg,
+        manipulator_only_arg,
         robot_state_publisher_node,
         # joint_state_publisher_node
     ])

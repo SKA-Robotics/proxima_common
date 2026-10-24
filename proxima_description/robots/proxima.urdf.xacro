@@ -2,12 +2,16 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="proxima">
   
   <xacro:arg name="manipulator" default="none"/>
+  <xacro:arg name="manipulator_only" default="false"/>
+
   <xacro:property name="manipulator" value="$(arg manipulator)"/>
 
   <xacro:property name="manipulator_mount_xyz" value="0.16 0 0.525"/>
   <xacro:property name="manipulator_mount_rpy" value="0 0 0"/>
 
-  <xacro:include filename="$(find proxima_description)/urdf/proxima_base.urdf.xacro"/>
+  <xacro:unless value="$(arg manipulator_only)">
+    <xacro:include filename="$(find proxima_description)/urdf/proxima_base.urdf.xacro"/>
+  </xacro:unless>
 
   <xacro:if value="${manipulator == '6DOF'}">
     
@@ -15,12 +19,23 @@
 
     <xacro:six_dof_arm_macro/>
 
-    <joint name="base_to_manipulator_joint" type="fixed">
-      <parent link="base_link"/>
-      <child link="root_link"/>
-      <origin xyz="${manipulator_mount_xyz}" rpy="${manipulator_mount_rpy}"/>
-    </joint>
-    
+    <xacro:unless value="$(arg manipulator_only)">
+      <joint name="base_to_manipulator_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="root_link"/>
+        <origin xyz="${manipulator_mount_xyz}" rpy="${manipulator_mount_rpy}"/>
+      </joint>
+    </xacro:unless>
+
+    <xacro:if value="$(arg manipulator_only)">
+      <link name="base_link"/>
+      <joint name="base_to_manipulator_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="root_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </joint>
+    </xacro:if>
+
   </xacro:if>
   
 </robot>
